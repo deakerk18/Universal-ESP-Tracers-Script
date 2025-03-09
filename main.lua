@@ -3,13 +3,13 @@ local camera = game:GetService("Workspace").CurrentCamera
 local CurrentCamera = workspace.CurrentCamera
 local worldToViewportPoint = CurrentCamera.worldToViewportPoint
 
-_G.TeamCheck = false -- Use True or False to toggle TeamCheck
+_G.TeamCheck = true
 
 for i,v in pairs(game.Players:GetChildren()) do
     local Tracer = Drawing.new("Line")
     Tracer.Visible = false
     Tracer.Color = Color3.new(1,1,1)
-    Tracer.Thickness = 1
+    Tracer.Thickness = 1.4
     Tracer.Transparency = 1
 
     function lineesp()

@@ -1,74 +1,65 @@
 local lplr = game.Players.LocalPlayer
 local camera = game:GetService("Workspace").CurrentCamera
-local CurrentCamera = workspace.CurrentCamera
-local worldToViewportPoint = CurrentCamera.worldToViewportPoint
+local RunService = game:GetService("RunService")
 
 _G.TeamCheck = true
 
-for i,v in pairs(game.Players:GetChildren()) do
+local function drawTracer(player)
     local Tracer = Drawing.new("Line")
     Tracer.Visible = false
-    Tracer.Color = Color3.new(1,1,1)
+    Tracer.Color = Color3.new(1, 1, 1)
     Tracer.Thickness = 1.4
     Tracer.Transparency = 1
 
-    function lineesp()
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if v.Character ~= nil and v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("HumanoidRootPart") ~= nil and v ~= lplr and v.Character.Humanoid.Health > 0 then
-                local Vector, OnScreen = camera:worldToViewportPoint(v.Character.HumanoidRootPart.Position)
+    local function updateTracer()
+        if not player or not player.Character then  
+            Tracer.Visible = false
+            return
+        end
 
-                if OnScreen then
-                    Tracer.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 1)
-                    Tracer.To = Vector2.new(Vector.X, Vector.Y)
+        local character = player.Character
+        local humanoid = character:FindFirstChild("Humanoid")
+        local head = character:FindFirstChild("Head") 
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
 
-                    if _G.TeamCheck and v.TeamColor == lplr.TeamColor then
-                        --//Teammates
-                        Tracer.Visible = false
-                    else
-                        --//Enemies
-                        Tracer.Visible = true
-                    end
-                else
-                    Tracer.Visible = false
-                end
-            else
+        if not humanoid or humanoid.Health <= 0 or not (head or rootPart) then
+            Tracer.Visible = false
+            return
+        end
+        
+        local targetPart = head or rootPart
+
+        local vector, onScreen = camera:WorldToViewportPoint(targetPart.Position)
+
+        if onScreen then
+            Tracer.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y) 
+            Tracer.To = Vector2.new(vector.X, vector.Y)
+
+            if _G.TeamCheck and player.TeamColor == lplr.TeamColor then
                 Tracer.Visible = false
+            else
+                Tracer.Visible = true   
             end
-        end)
+        else
+            Tracer.Visible = false
+        end
     end
-    coroutine.wrap(lineesp)()
+
+
+    RunService.RenderStepped:Connect(updateTracer)
+
+    player.CharacterRemoving:Connect(function()
+		Tracer:Remove()
+    end)
+	
 end
 
-game.Players.PlayerAdded:Connect(function(v)
-    local Tracer = Drawing.new("Line")
-    Tracer.Visible = false
-    Tracer.Color = Color3.new(1,1,1)
-    Tracer.Thickness = 1
-    Tracer.Transparency = 1
+for _, player in pairs(game.Players:GetPlayers()) do
+    drawTracer(player)
+end
 
-    function lineesp()
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if v.Character ~= nil and v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("HumanoidRootPart") ~= nil and v ~= lplr and v.Character.Humanoid.Health > 0 then
-                local Vector, OnScreen = camera:worldToViewportPoint(v.Character.HumanoidRootPart.Position)
-
-                if OnScreen then
-                    Tracer.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 1)
-                    Tracer.To = Vector2.new(Vector.X, Vector.Y)
-
-                    if _G.TeamCheck and v.TeamColor == lplr.TeamColor then
-                        --//Teammates
-                        Tracer.Visible = false
-                    else
-                        --//Enemies
-                        Tracer.Visible = true
-                    end
-                else
-                    Tracer.Visible = false
-                end
-            else
-                Tracer.Visible = false
-            end
-        end)
-    end
-    coroutine.wrap(lineesp)()
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+		drawTracer(player)
+	end)
 end)
